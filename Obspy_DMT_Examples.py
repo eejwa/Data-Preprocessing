@@ -14,4 +14,5 @@ obspyDMT --datapath DMT_Data_P_S_REVIEWED --min_mag 5.5 --max_mag 7.5 --event_ci
 ### get events within a defined rectangle
 obspyDMT --datapath ./DMT_data --min_mag 5.5 --max_mag 7.5 --event_rect -130./-60./-60./5 --min_date 1997-01-01 --max_date 2000-01-01 --event_catalog ISC --isc_catalog REVIEWED --data_source IRIS --net XA --loc * --cha BH* --preset 0 --offset 1800 --req_parallel --req_np 10 
 
-
+## same as above but with a made up station rectangle. 
+obspyDMT --datapath ./DMT_data --min_mag 5.5 --max_mag 7.5 --event_rect -130./-60./-60./5 --min_date 1997-01-01 --max_date 2000-01-01 --event_catalog ISC --isc_catalog REVIEWED --data_source IRIS --net XA -station_rect 0/40/-40/0 --cha BH* --preset 0 --offset 1800 --req_parallel --req_np 10 
