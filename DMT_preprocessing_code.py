@@ -60,7 +60,7 @@ parser = argparse.ArgumentParser(description='Preprocessing script for data retr
 
 parser.add_argument("-fmin","--minimuum_frequency", help="Enter the lowest frequency to be bandpass filtered.", type=float, required=False, action="store", default = 0.05)
 
-parser.add_argument("-fmax","--maximuum_frequency", help="Enter the highest frequency to be bandpass filtered.", type=float, required=False, action="store", default = 0.4)
+parser.add_argument("-fmax","--maximuum_frequency", help="Enter the highest frequency to be bandpass filtered.", type=float, required=False, action="store", default = 1.0)
 
 parser.add_argument("-p","--phase_list", help="Enter the phases you want the travel time predictions for.", type=str, nargs='+', required=True, action="store", default=[])
 
@@ -203,20 +203,34 @@ for M_file in glob('*BH*'):
 			time_pred_total = O + time_prediction[0].time
 		else:
 			time_pred_total = None
-		print(phase, time_pred_total, t+1)
+
+		print(phase, time_pred_total)
 		### add these values to a list ###
-		ph_time_list.append([phase, time_pred_total, t+1])
+		ph_time_list.append([phase, time_pred_total])
 
 		tn = str('t'+str(t+1))
 		ktn = str('k'+tn)
 
 		print(tn,ktn)
 
-		### for each loop se tthe attributes that I want ###
-		# set predicted travel time
-		setattr(trace2.stats.sac, tn, time_pred_total)
+		## i.e. for SKKS major arc.
+#		if len(time_prediction) = 2:
+#			time_pred_total_2 = O + time_prediction[1].time
+#			phase_label2 = "%s_2" %phase
+#			ph_time_list.append([phase_label2, time_pred_total_2])
 
-		setattr(trace2.stats.sac,ktn, phase)
+
+
+	### for each loop se tthe attributes that I want ###
+	# set predicted travel time
+	for t,pt_list in enumerate(ph_time_list):
+		time_pred = pt_list[1]
+		phase_label = pt_list[0]
+		tn = str('t'+str(t+1))
+		ktn = str('k'+tn)
+		setattr(trace2.stats.sac, tn, time_pred)
+		setattr(trace2.stats.sac,ktn, phase_label)
+
 
 
 	if trace2.stats.channel == "BHZ":
