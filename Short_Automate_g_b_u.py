@@ -149,19 +149,6 @@ for i,tr in enumerate(st):
 
 ### First get rid of any traces which have an epicentral distance of less than 80.
 
-#	fig = plt.figure()
-#	fig.add_subplot(311)
-#	fig.add_subplot(211)
-#	plt.axhline(0, linestyle=':', label="Zero Reference")
-#	plt.plot(abs(dat), color="black")
-#	plt.axhline(peak_avg, color='b', label="Mean of Peaks of Absolute Amplitude")
-#	plt.axhline(max_amp, color='r', label="Max Amplitude")
-#	plt.title("Station: %s Signal-Noise Ratio: %s" %(tr.stats.station, peak_ratio))
-#	plt.legend(loc='best')
-#	plt.xlabel("Time (s)")
-#	plt.ylabel("Displacement (m)")
-#	plt.show()
-
 	dist = tr.stats.sac.gcarc
 
 
@@ -200,21 +187,5 @@ for i,tr in enumerate(st):
 	fig.add_subplot(311)
 	fig.add_subplot(211)
 
-
-
-#	plt.plot(dat)
-#	plt.axhline(avg_amp, color='b', label="Mean")
-#	plt.axhline(max_amp, color='r', label="Max")
-#	plt.axhline(peak_avg, color='g', label="Peak_Mean")
-#	plt.title(tr.stats.station)
-#	plt.legend(loc='upper right')
-
-#	fig.add_subplot(212)
-#	plt.plot(env_dat)
-#	plt.axhline(avg_amp_env, color='b', label="Mean")
-#	plt.axhline(max_amp_env, color='r', label="Max")
-#	plt.title(tr.stats.station)
-#	plt.legend(loc='upper right')
-#	plt.show()
 
 print("Keep %f | Maybe %f | Trash %f | Confused %f" %(keep_count, maybe_count,trash_count, confused_count))
