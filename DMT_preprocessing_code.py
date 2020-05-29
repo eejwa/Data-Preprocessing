@@ -17,9 +17,7 @@
 ## import useful packages:
 
 import obspy
-
 import os
-
 from glob import *
 
 ## To take in arguments from the terminal
@@ -66,7 +64,9 @@ parser.add_argument("-p","--phase_list", help="Enter the phases you want the tra
 
 parser.add_argument("-tap","--taper_percentage", help="Enter the percentage of the trace at each end you want to taper as a decimal.", type=float, required=False, action="store", default=0.05)
 
-parser.add_argument("-rot","--rotate", help="Enter whether you want the traces to be rotated or not.", type=bool, required=False, action="store", default=True)
+parser.add_argument("-rot","--rotate", help="Enter whether you want the traces to be rotated or not.", required=False, action="store_true", default=False)
+
+parser.add_argument("-split","--splitting", help="Enter whether you want the traces stored in a file and be compativle with SHEBA.", type=bool, required=False, action="store", default=False)
 
 parser.add_argument("-detrend","--detrend_T_F", help="Enter whether you want to detrend the trace or not.", type=bool, required=False, action="store", default=True)
 
@@ -80,7 +80,7 @@ phases = args.phase_list[:]
 taper_percent = args.taper_percentage
 Q_rotate = args.rotate
 Q_detrend = args.detrend_T_F
-
+Q_splitting = args.splitting
 
 print(min_freq, max_freq,phases,taper_percent,Q_rotate,Q_detrend)
 
@@ -154,6 +154,7 @@ for M_file in glob('*BH*'):
 	stlo=station.longitude
 	stel=station.elevation
 	station_temp.append(station.code)
+
 	## MORE SANITY CHECKS
 	with open(ev_path) as f:
 	## only read lines from line 6
@@ -186,9 +187,6 @@ for M_file in glob('*BH*'):
 	ph_time_list = []
 
 #### Populate information into SAC part ####
-	#trace2.stats.sac = AttribDict({'baz': distances['backazimuth'], 'az': distances['azimuth'], 'kstnm': str(station),'cmpinc': inclination, 'gcarc': distances['distance'],
-	#							'dist': distances['distancemeters'], 'evla': evla, 'evlo': evlo, 'evdp': evdp, 'stla': stla, 'stlo': stlo, 'stel': stel,'o': O,
-	#							'stdp': dip, 'iztype':9, 'mag': mag})
 
 	trace2.stats.sac = AttribDict({'baz': float(baz), 'az': float(az), 'kstnm': str(station),'cmpinc': inclination, 'gcarc': str(dist_deg),
 							'dist': str(dist_km), 'evla': evla, 'evlo': evlo, 'evdp': evdp, 'stla': stla, 'stlo': stlo, 'stel': stel,'o': O,
@@ -268,59 +266,6 @@ for M_file in glob('*BH*'):
 
 	trace_filt.write("%s.%s.SAC" %(station_name,channel_name), format="SAC")
 
-
-#	time = numpy.arange(0,trace_filt.stats.npts / trace_filt.stats.sampling_rate, 1/trace_filt.stats.sampling_rate)
-#	time -= trace_filt.stats.sac.o
-#
-#
-#	trace_norm = trace2.normalize()
-#	trace_rr_norm = trace_rr.normalize()
-#	trace_filt_norm = trace_filt.normalize()
-#	trace_detrend_norm = trace_detrend.normalize()
-#	trace_taper_norm = trace_taper.normalize()
-#
-#
-#	fig = plt.figure()
-#	ax1 = plt.subplot(511)
-#	plt.plot(time,trace2.data, label="Raw", color="black")
-#	plt.axvline(x=trace.stats.sac.t1 - trace.stats.sac.o, color='g',  label="SKS")
-#	plt.axvline(x=trace.stats.sac.t2- trace.stats.sac.o, color='r', label="SKKS")
-##	plt.xlim(xmin=1100,xmax=1800)
-#	plt.legend(loc='upper left')
-#	ax2 = plt.subplot(512, sharex=ax1)
-#	plt.plot(time,trace_rr.data, label="Removed Response", color="black")
-#	plt.axvline(x=trace.stats.sac.t1 - trace.stats.sac.o, color='g', label="SKS")
-#	plt.axvline(x=trace.stats.sac.t2- trace.stats.sac.o, color='r', label="SKKS")
-##	plt.xlim(xmin=1100,xmax=1800)
-#	plt.legend(loc='upper left')
-#	ax3 = plt.subplot(513)
-#	plt.plot(time,trace_detrend.data, label="RR and Detrend", color="black")
-#	plt.axvline(x=trace.stats.sac.t1 - trace.stats.sac.o, color='g', label="SKS")
-##	plt.xlim(xmin=1100,xmax=1800)
-#	plt.ylabel("Normalised Displacement (m)")
-#	plt.axvline(x=trace.stats.sac.t2- trace.stats.sac.o, color='r', label="SKKS")
-#	plt.legend(loc='upper left')
-#	ax4 = plt.subplot(514)
-#	plt.plot(time,trace_taper.data, label="RR, Detrend, Taper", color="black")
-#	plt.axvline(x=trace.stats.sac.t1 - trace.stats.sac.o, color='g',  label="SKS")
-#	plt.axvline(x=trace.stats.sac.t2- trace.stats.sac.o, color='r', label="SKKS")
-##	plt.xlim(xmin=1100,xmax=1800)
-#	plt.legend(loc='upper left')
-#
-#	ax5 = plt.subplot(515)
-#	plt.plot(time,trace_filt.data, label="All + Filter", color="black")
-#	plt.axvline(x=trace.stats.sac.t1 - trace.stats.sac.o, color='g', label="SKS")
-#	plt.axvline(x=trace.stats.sac.t2- trace.stats.sac.o, color='r', label="SKKS")
-##	plt.xlim(xmin=1100,xmax=1800)
-#	plt.xlabel("Time (s)")
-#	plt.legend(loc='upper left')
-#	plt.setp(ax1.get_xticklabels(), visible=False)
-#	plt.setp(ax2.get_xticklabels(), visible=False)
-#	plt.setp(ax3.get_xticklabels(), visible=False)
-#	plt.setp(ax4.get_xticklabels(), visible=False)
-#
-#	plt.show()
-
 	print("------------Next file -------------")
 
 
@@ -357,68 +302,51 @@ stations = list(set(station_temp))
 print(stations)
 
 
-## Now we rotate ## if the user wants to ##
+#### ROTATE! ####
+print(Q_rotate)
+if Q_rotate == True:
 
-## use the lists made at the start of the code
+	## Now we rotate ## if the user wants to ##
 
-for station in stations:
-## print station, because, why not?
-	print(station)
-	## make temporary list for the sac files
-	temp_list = []
+	## use the lists made at the start of the code
 
+	for station in stations:
+	## print station, because, why not?
+		print(station)
+		## make temporary list for the sac files
+		temp_list = []
 
+		## loop over all the sac files, because efficiency is for losers
+		for sac_file in glob('*SAC'):
+		## print the name, because, see above comment about efficiency and losers
+			## take the BHN and BHE files and shove them in the temporary list
+			if "%s." %station in sac_file and 'BHN' in sac_file:
+				temp_list.append(sac_file)
+			if "%s." %station in sac_file and 'BHE' in sac_file:
+				temp_list.append(sac_file)
+			#print(temp_list)
 
+	## make a stream of those two lists only
+		stream = obspy.read(temp_list[0])
+		stream += obspy.read(temp_list[1])
 
-	## loop over all the sac files, because efficiency is for losers
-	for sac_file in glob('*SAC'):
-	## print the name, because, see above comment about efficiency and losers
-		## take the BHN and BHE files and shove them in the temporary list
-		if "%s." %station in sac_file and 'BHN' in sac_file:
-			temp_list.append(sac_file)
-		if "%s." %station in sac_file and 'BHE' in sac_file:
-			temp_list.append(sac_file)
-		#print(temp_list)
+		## find back azimuth and inclination
+		baz = stream[0].stats.sac.baz
+		inc = stream[0].stats.sac.cmpinc
 
-## make a stream of those two lists only
-	stream = obspy.read(temp_list[0])
-	stream += obspy.read(temp_list[1])
+	### check if they are the same length, if not, trim the longer one by the difference in data points
 
-	## find back azimuth and inclination
-	baz = stream[0].stats.sac.baz
-	inc = stream[0].stats.sac.cmpinc
-#	print(baz)
-#	print(inc)
+		npts1 = stream[0].stats.npts
+		npts2 = stream[1].stats.npts
+		samp_rate = stream[0].stats.delta
 
-### check if they are the same length, if not, trim the longer one by the difference in data points
+		s_time1 = stream[0].stats.starttime
+		s_time2 = stream[1].stats.starttime
 
-	npts1 = stream[0].stats.npts
-	npts2 = stream[1].stats.npts
-	samp_rate = stream[0].stats.delta
+		e_time1 = stream[0].stats.endtime
+		e_time2 = stream[1].stats.endtime
 
-	s_time1 = stream[0].stats.starttime
-	s_time2 = stream[1].stats.starttime
-
-	e_time1 = stream[0].stats.endtime
-	e_time2 = stream[1].stats.endtime
-
-	print(stream)
-
-	#if npts1 != npts2:
-
-	#	if npts1 > npts2:
-	#		print("not the same length!")
-	#		extra = npts1 - npts2
-			## trim to same length
-	#		stream[0].trim(starttime = stream[0].stats.starttime, endtime = stream[0].stats.endtime - (extra * samp_rate), nearest_sample=True)
-
-	#	elif npts1 < npts2:
-	#		print("not the same length!")
-	#		extra = npts2 - npts1
-	#		stream[1].trim(starttime = stream[1].stats.starttime, endtime = stream[1].stats.endtime - (extra * samp_rate), nearest_sample=True)
-
-	#print(stream[0].stats.npts)
-	#print(stream[1].stats.npts)
+		print(stream)
 
 	## correct for different trace start times
 
@@ -438,9 +366,6 @@ for station in stations:
 			stream[1].trim(endtime=e_time1)
 
 
-
-#### ROTATE! ####
-
 	stream.rotate(method = 'NE->RT', back_azimuth = baz, inclination = inc)
 
 
@@ -453,22 +378,6 @@ for station in stations:
 
 	e_time3 = trace1.stats.endtime
 	e_time4 = trace2.stats.endtime
-
-	#if npts1 != npts2:
-
-	#	if npts1 > npts2:
-	#		print("not the same length!")
-	#		extra = npts1 - npts2
-			## trim to same length
-	#		stream[0].trim(starttime = stream[0].stats.starttime, endtime = stream[0].stats.endtime - (extra * samp_rate), nearest_sample=True)
-
-	#	elif npts1 < npts2:
-	#		print("not the same length!")
-	#		extra = npts2 - npts1
-	#		stream[1].trim(starttime = stream[1].stats.starttime, endtime = stream[1].stats.endtime - (extra * samp_rate), nearest_sample=True)
-
-	#print(stream[0].stats.npts)
-	#print(stream[1].stats.npts)
 
 	## correct for different trace start times
 
@@ -515,41 +424,39 @@ for station in stations:
 	station_name,channel_name,SAC = temp_list[0].split(".")
 
 ## write the dude ##
-## Use a simpler name...
-	#trace1.write("%s.%s.%s.%s.%s.%s.%s.RR.Filt.Tap.SAC" %(event_time,msec,network_name,station_name,str(trace1.stats.channel),mag1,mag2), format = "SAC")
-	#trace2.write("%s.%s.%s.%s.%s.%s.%s.RR.Filt.Tap.SAC" %(event_time,msec,network_name,station_name,str(trace2.stats.channel),mag1,mag2), format = "SAC")
+
 	trace1.write("%s.%s.SAC" %(station_name,str(trace1.stats.channel)), format = "SAC")
 	trace2.write("%s.%s.SAC" %(station_name,str(trace2.stats.channel)), format = "SAC")
 
-## Store the BHN and BHE in case I want them for whatever reason.
-# make directory
-H_E_Dir="../processed/BHN_BHE_processed"
-if not os.path.exists(H_E_Dir):
-    os.makedirs(H_E_Dir)
-# move files
-for old_file in glob('*BHN*.SAC'):
-	if os.path.exists(str(H_E_Dir) + "/" + str(old_file)):
-		os.remove(str(H_E_Dir) + "/" + str(old_file))
-	shutil.move(old_file,H_E_Dir)
+	## Store the BHN and BHE in case I want them for whatever reason.
+	# make directory
+	H_E_Dir="../processed/BHN_BHE_processed"
+	if not os.path.exists(H_E_Dir):
+	    os.makedirs(H_E_Dir)
+	# move files
+	for old_file in glob('*BHN*.SAC'):
+		if os.path.exists(str(H_E_Dir) + "/" + str(old_file)):
+			os.remove(str(H_E_Dir) + "/" + str(old_file))
+		shutil.move(old_file,H_E_Dir)
 
-for old_file in glob('*BHE*.SAC'):
-	if os.path.exists(str(H_E_Dir) + "/" + str(old_file)):
-		os.remove(str(H_E_Dir) + "/" + str(old_file))
-	shutil.move(old_file,H_E_Dir)
-
-
-	## should be left with only BHR/BHT/BHZ files
+	for old_file in glob('*BHE*.SAC'):
+		if os.path.exists(str(H_E_Dir) + "/" + str(old_file)):
+			os.remove(str(H_E_Dir) + "/" + str(old_file))
+			shutil.move(old_file,H_E_Dir)
 
 
-print("AND NOW WE ARE DONE WITH THIS HYPE AND CAN MOVE ON WITH OUR LIVES")
+## should be left with only BHR/BHT/BHZ files
 
 ### We are, in fact, not done...
 ## need to move the files to the "processed" directory
 
+if Q_splitting:
 ### Going to do my splitting work within a seperate directory
-Splitting_Dir = "../Splitting"
-if not os.path.exists(Splitting_Dir):
-    os.makedirs(Splitting_Dir)
+	Splitting_Dir = "../Splitting"
+	if not os.path.exists(Splitting_Dir):
+	    os.makedirs(Splitting_Dir)
+else:
+	pass
 
 for pro_file in glob('*SAC'):
 	pro_file_First = pro_file.split(".")[0]
@@ -559,7 +466,10 @@ for pro_file in glob('*SAC'):
 		os.remove("../processed/%s" %pro_file)
 	shutil.copy(pro_file, "../processed")
 
-	if os.path.exists("%s/%s" %(Splitting_Dir,pro_file)):
-		os.remove("%s/%s" %(Splitting_Dir,pro_file))
-	shutil.move(pro_file, Splitting_Dir)
-	os.rename("%s/%s" %(Splitting_Dir, pro_file), "%s/%s" %(Splitting_Dir,pro_file_no_SAC))
+	if Q_splitting:
+		if os.path.exists("%s/%s" %(Splitting_Dir,pro_file)):
+			os.remove("%s/%s" %(Splitting_Dir,pro_file))
+		shutil.move(pro_file, Splitting_Dir)
+		os.rename("%s/%s" %(Splitting_Dir, pro_file), "%s/%s" %(Splitting_Dir,pro_file_no_SAC))
+	else:
+		pass
