@@ -64,7 +64,7 @@ parser.add_argument("-p","--phase_list", help="Enter the phases you want the tra
 
 parser.add_argument("-tap","--taper_percentage", help="Enter the percentage of the trace at each end you want to taper as a decimal.", type=float, required=False, action="store", default=0.05)
 
-parser.add_argument("-rot","--rotate", help="Enter whether you want the traces to be rotated or not.", required=False, action="store_true", default=False)
+parser.add_argument("-rot","--rotate", help="Enter whether you want the traces to be rotated or not.", required=False, action="store_true", default=True)
 
 parser.add_argument("-split","--splitting", help="Enter whether you want the traces stored in a file and be compativle with SHEBA.", type=bool, required=False, action="store", default=False)
 
@@ -81,7 +81,7 @@ taper_percent = args.taper_percentage
 Q_rotate = args.rotate
 Q_detrend = args.detrend_T_F
 Q_splitting = args.splitting
-
+major=True
 print(min_freq, max_freq,phases,taper_percent,Q_rotate,Q_detrend)
 
 ### Find the files with the station and event information in them
@@ -211,11 +211,13 @@ for M_file in glob('*BH*'):
 
 		print(tn,ktn)
 
-		## i.e. for SKKS major arc.
-#		if len(time_prediction) = 2:
-#			time_pred_total_2 = O + time_prediction[1].time
-#			phase_label2 = "%s_2" %phase
-#			ph_time_list.append([phase_label2, time_pred_total_2])
+		# i.e. for SKKS major arc.
+		if major == True:
+			if len(time_prediction) > 1:
+				# only use the first major arc arrival
+				time_pred_total_2 = O + time_prediction[1].time
+				phase_label2 = "%s_Major" %phase
+				ph_time_list.append([phase_label2, time_pred_total_2])
 
 
 
@@ -301,9 +303,9 @@ stations = list(set(station_temp))
 
 print(stations)
 
-
+Q_rotate = True
 #### ROTATE! ####
-print(Q_rotate)
+print("rotate:", Q_rotate)
 if Q_rotate == True:
 
 	## Now we rotate ## if the user wants to ##
@@ -346,87 +348,89 @@ if Q_rotate == True:
 		e_time1 = stream[0].stats.endtime
 		e_time2 = stream[1].stats.endtime
 
+		# print(stream)
+
+		## correct for different trace start times
+
+		if s_time1 != s_time2:
+			if s_time1 > s_time2:
+				stream[0].trim(starttime=s_time1)
+				stream[1].trim(starttime=s_time1)
+			if s_time1 < s_time2:
+				stream[0].trim(starttime=s_time2)
+				stream[1].trim(starttime=s_time2)
+		if e_time1 != e_time2:
+			if e_time1 > e_time2:
+				stream[0].trim(endtime=e_time2)
+				stream[1].trim(endtime=e_time2)
+			if e_time1 < e_time2:
+				stream[0].trim(endtime=e_time1)
+				stream[1].trim(endtime=e_time1)
+
+
+		stream.rotate(method = 'NE->RT', back_azimuth = baz, inclination = inc)
+
+
+	### Get the traces from the stream ###
+		trace1 = stream[0]
+		trace2 = stream[1]
+
+		s_time3 = trace1.stats.starttime
+		s_time4 = trace2.stats.starttime
+
+		e_time3 = trace1.stats.endtime
+		e_time4 = trace2.stats.endtime
+
+		## correct for different trace start times
+
+		if s_time3 != s_time4:
+			if s_time3 > s_time4:
+				trace1.trim(starttime=s_time3)
+				trace2.trim(starttime=s_time3)
+			if s_time3 < s_time4:
+				trace1.trim(starttime=s_time4)
+				trace2.trim(starttime=s_time4)
+		if e_time3 != e_time4:
+			if e_time3 > e_time4:
+				trace1.trim(endtime=e_time4)
+				trace2.trim(endtime=e_time4)
+			if e_time1 < e_time2:
+				trace1.trim(endtime=e_time3)
+				trace2.trim(endtime=e_time3)
+
 		print(stream)
 
-	## correct for different trace start times
+		ch1 = trace1.stats.channel
+		ch2 = trace2.stats.channel
 
-	if s_time1 != s_time2:
-		if s_time1 > s_time2:
-			stream[0].trim(starttime=s_time1)
-			stream[1].trim(starttime=s_time1)
-		if s_time1 < s_time2:
-			stream[0].trim(starttime=s_time2)
-			stream[1].trim(starttime=s_time2)
-	if e_time1 != e_time2:
-		if e_time1 > e_time2:
-			stream[0].trim(endtime=e_time2)
-			stream[1].trim(endtime=e_time2)
-		if e_time1 < e_time2:
-			stream[0].trim(endtime=e_time1)
-			stream[1].trim(endtime=e_time1)
+		print(ch1,ch2)
 
+		if ch1 == "BHR":
+			cmpaz_1 = float(trace1.stats.sac.baz) + 180
+		elif ch1 == "BHT":
+			cmpaz_1 = float(trace1.stats.sac.baz) + 270
+		else:
+			pass
 
-	stream.rotate(method = 'NE->RT', back_azimuth = baz, inclination = inc)
+		if ch2 == "BHR":
+			cmpaz_2 = float(trace1.stats.sac.baz) + 180
+		elif ch2 == "BHT":
+			cmpaz_2 = float(trace1.stats.sac.baz) + 270
+		else:
+			pass
 
+		### write component information into the file
+		trace1.stats.sac['cmpaz'] = float(cmpaz_1)
+		trace2.stats.sac['cmpaz'] = float(cmpaz_2)
 
-### Get the traces from the stream ###
-	trace1 = stream[0]
-	trace2 = stream[1]
+		print("CMPAZ: ", trace1.stats.sac.cmpaz)
+	###### get info from the name of the first trace #####
+		station_name,channel_name,SAC = temp_list[0].split(".")
 
-	s_time3 = trace1.stats.starttime
-	s_time4 = trace2.stats.starttime
+	## write the dude ##
 
-	e_time3 = trace1.stats.endtime
-	e_time4 = trace2.stats.endtime
-
-	## correct for different trace start times
-
-	if s_time3 != s_time4:
-		if s_time3 > s_time4:
-			trace1.trim(starttime=s_time3)
-			trace2.trim(starttime=s_time3)
-		if s_time3 < s_time4:
-			trace1.trim(starttime=s_time4)
-			trace2.trim(starttime=s_time4)
-	if e_time3 != e_time4:
-		if e_time3 > e_time4:
-			trace1.trim(endtime=e_time4)
-			trace2.trim(endtime=e_time4)
-		if e_time1 < e_time2:
-			trace1.trim(endtime=e_time3)
-			trace2.trim(endtime=e_time3)
-
-	print(stream)
-
-	ch1 = trace1.stats.channel
-	ch2 = trace2.stats.channel
-
-	if ch1 == "BHR":
-		cmpaz_1 = float(trace1.stats.sac.baz) + 180
-	elif ch1 == "BHT":
-		cmpaz_1 = float(trace1.stats.sac.baz) + 270
-	else:
-		pass
-
-	if ch2 == "BHR":
-		cmpaz_2 = float(trace1.stats.sac.baz) + 180
-	elif ch2 == "BHT":
-		cmpaz_2 = float(trace1.stats.sac.baz) + 270
-	else:
-		pass
-
-	### write component information into the file
-	trace1.stats.sac['cmpaz'] = float(cmpaz_1)
-	trace2.stats.sac['cmpaz'] = float(cmpaz_2)
-
-	print("CMPAZ: ", trace1.stats.sac.cmpaz)
-###### get info from the name of the first trace #####
-	station_name,channel_name,SAC = temp_list[0].split(".")
-
-## write the dude ##
-
-	trace1.write("%s.%s.SAC" %(station_name,str(trace1.stats.channel)), format = "SAC")
-	trace2.write("%s.%s.SAC" %(station_name,str(trace2.stats.channel)), format = "SAC")
+		trace1.write("%s.%s.SAC" %(station_name,str(trace1.stats.channel)), format = "SAC")
+		trace2.write("%s.%s.SAC" %(station_name,str(trace2.stats.channel)), format = "SAC")
 
 	## Store the BHN and BHE in case I want them for whatever reason.
 	# make directory
