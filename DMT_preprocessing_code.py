@@ -11,7 +11,7 @@
 ## Then leave them all in the "processed" directory
 ## Good stuff
 
-#### -----This needs to be run from the "raw" directory as given in the ObspyDMT file----- ####
+#### -----This needs to be run from the "raw" directory as given in the ObspyDMT directory structure ----- ####
 
 
 ## import useful packages:
@@ -64,7 +64,7 @@ parser.add_argument("-p","--phase_list", help="Enter the phases you want the tra
 
 parser.add_argument("-tap","--taper_percentage", help="Enter the percentage of the trace at each end you want to taper as a decimal.", type=float, required=False, action="store", default=0.05)
 
-parser.add_argument("-rot","--rotate", help="Enter whether you want the traces to be rotated or not.", required=False, action="store_true", default=True)
+parser.add_argument("-rot","--rotate", help="Enter whether you want the traces to be rotated or not.", required=False, action="store_true", default=False)
 
 parser.add_argument("-split","--splitting", help="Enter whether you want the traces stored in a file and be compativle with SHEBA.", type=bool, required=False, action="store", default=False)
 
@@ -119,6 +119,7 @@ station_temp = []
 for M_file in glob('*BH*'):
 	print(M_file)
 	bits = M_file.split('.')
+	print('bits', len(bits))
 	station_name=bits[1]
 	network_name=bits[0]
 
@@ -266,7 +267,7 @@ for M_file in glob('*BH*'):
 
 	trace_filt.filter('bandpass', freqmin=min_freq, freqmax=max_freq, corners=4, zerophase=True)
 
-	trace_filt.write("%s.%s.SAC" %(station_name,channel_name), format="SAC")
+	trace_filt.write("%s.%s.%s.SAC" %(network_name,station_name,channel_name), format="SAC")
 
 	print("------------Next file -------------")
 
@@ -303,7 +304,7 @@ stations = list(set(station_temp))
 
 print(stations)
 
-Q_rotate = True
+# Q_rotate = True
 #### ROTATE! ####
 print("rotate:", Q_rotate)
 if Q_rotate == True:
@@ -405,16 +406,16 @@ if Q_rotate == True:
 
 		print(ch1,ch2)
 
-		if ch1 == "BHR":
+		if ch1[-1] == "R":
 			cmpaz_1 = float(trace1.stats.sac.baz) + 180
-		elif ch1 == "BHT":
+		elif ch1[-1] == "T":
 			cmpaz_1 = float(trace1.stats.sac.baz) + 270
 		else:
 			pass
 
-		if ch2 == "BHR":
+		if ch2[-1] == "R":
 			cmpaz_2 = float(trace1.stats.sac.baz) + 180
-		elif ch2 == "BHT":
+		elif ch2[-1] == "T":
 			cmpaz_2 = float(trace1.stats.sac.baz) + 270
 		else:
 			pass
@@ -425,12 +426,12 @@ if Q_rotate == True:
 
 		print("CMPAZ: ", trace1.stats.sac.cmpaz)
 	###### get info from the name of the first trace #####
-		station_name,channel_name,SAC = temp_list[0].split(".")
+		network_name, station_name,channel_name,SAC = temp_list[0].split(".")
 
 	## write the dude ##
 
-		trace1.write("%s.%s.SAC" %(station_name,str(trace1.stats.channel)), format = "SAC")
-		trace2.write("%s.%s.SAC" %(station_name,str(trace2.stats.channel)), format = "SAC")
+		trace1.write("%s.%s.%s.SAC" %(str(trace1.stats.network), station_name,str(trace1.stats.channel)), format = "SAC")
+		trace2.write("%s.%s.%s.SAC" %(str(trace2.stats.network), station_name,str(trace2.stats.channel)), format = "SAC")
 
 	## Store the BHN and BHE in case I want them for whatever reason.
 	# make directory
